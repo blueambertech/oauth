@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/blueambertech/oauth"
+	"github.com/blueambertech/secretmanager"
 	"golang.org/x/oauth2"
 )
 
@@ -32,8 +33,8 @@ var (
 )
 
 // AuthRedirect generates an oauth URL based on the scopes, client ID and callback URL provided and then redirects to it
-func AuthRedirect(w http.ResponseWriter, r *http.Request, scopes []string, clientID, callbackURL string) error {
-	secret, err := oauth.Secrets.Get(r.Context(), "strava-oauth-client-secret")
+func AuthRedirect(w http.ResponseWriter, r *http.Request, sm secretmanager.SecretManager, scopes []string, clientID, callbackURL string) error {
+	secret, err := sm.Get(r.Context(), "strava-oauth-client-secret")
 	if err != nil {
 		return errors.New("failed to get strava client secret: " + err.Error())
 	}
@@ -52,7 +53,7 @@ func AuthRedirect(w http.ResponseWriter, r *http.Request, scopes []string, clien
 // AuthCallback should be triggered as a result of calling the callbackURL supplied to the AuthRedirect func, it will
 // post a request to the strava API to exchange the code supplied on the callback with an oauth token and then return it
 // as a json string
-func AuthCallback(w http.ResponseWriter, r *http.Request, clientID string) (string, error) {
+func AuthCallback(w http.ResponseWriter, r *http.Request, sm secretmanager.SecretManager, clientID string) (string, error) {
 	qs := r.URL.Query()
 
 	queryErrors := qs["error"]
@@ -63,7 +64,7 @@ func AuthCallback(w http.ResponseWriter, r *http.Request, clientID string) (stri
 	if len(userID) == 0 {
 		return "", errors.New("missing user ID on callback url")
 	}
-	secret, err := oauth.Secrets.Get(r.Context(), "strava-oauth-client-secret")
+	secret, err := sm.Get(r.Context(), "strava-oauth-client-secret")
 	if err != nil {
 		return "", errors.New("failed to get strava client secret: " + err.Error())
 	}
