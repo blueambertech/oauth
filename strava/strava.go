@@ -31,7 +31,7 @@ var (
 	}
 )
 
-// AuthRedirect generates an oauth URL based on the scopes, client ID and callback URL provided and then redirects to it
+// AuthRedirect generates an oauth URL based on the scopes, client ID and callback URL provided and then sets it in the X-Redirect header for the client to use
 func AuthRedirect(w http.ResponseWriter, r *http.Request, sm secretmanager.SecretManager, scopes []string, clientID, callbackURL string) error {
 	secret, err := sm.Get(r.Context(), "strava-oauth-client-secret")
 	if err != nil {
