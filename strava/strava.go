@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -45,8 +44,8 @@ func AuthRedirect(w http.ResponseWriter, r *http.Request, sm secretmanager.Secre
 		Endpoint:     endpoint,
 	}
 	authUrl := config.AuthCodeURL(oauth.GetStateString()) + "&scope=" + url.QueryEscape(strings.Join(scopes, ","))
-	log.Println(authUrl)
-	http.Redirect(w, r, authUrl, http.StatusFound)
+	w.Header().Add("X-Redirect", authUrl)
+	w.WriteHeader(http.StatusOK)
 	return nil
 }
 
