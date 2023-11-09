@@ -1,6 +1,7 @@
 package strava
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -30,6 +31,14 @@ var (
 		TokenURL:      "https://www.strava.com/oauth/token",
 	}
 )
+
+type TokenInfo struct {
+	TokenType    string `json:"token_type"`
+	ExpiresAt    int64  `json:"expires_at"`
+	ExpiresIn    int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+	AccessToken  string `json:"access_token"`
+}
 
 // AuthRedirect generates an oauth URL based on the scopes, client ID and callback URL provided and then sets it in the X-Redirect header for the client to use
 func AuthRedirect(w http.ResponseWriter, r *http.Request, sm secretmanager.SecretManager, scopes []string, clientID, callbackURL string) error {
@@ -75,5 +84,16 @@ func AuthCallback(w http.ResponseWriter, r *http.Request, sm secretmanager.Secre
 	if err != nil {
 		return "", errors.New("failed to read strava response: " + err.Error())
 	}
-	return string(body), nil
+
+	// Verify the token returned is valid
+	var t TokenInfo
+	err = json.Unmarshal(body, &t)
+	if err != nil {
+		return "", errors.New("failed to decode strava token: " + err.Error())
+	}
+
+	if t.TokenType == "Bearer" {
+		return string(body), nil
+	}
+	return "", errors.New("token type from Strava was invalid: " + t.TokenType)
 }
