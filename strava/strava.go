@@ -56,12 +56,8 @@ func AuthCallback(w http.ResponseWriter, r *http.Request, sm secretmanager.Secre
 	qs := r.URL.Query()
 
 	queryErrors := qs["error"]
-	userID := qs["user"]
 	if len(queryErrors) >= 1 && queryErrors[0] == "access_denied" {
 		return "", errors.New("user cancelled or permission not granted")
-	}
-	if len(userID) == 0 {
-		return "", errors.New("missing user ID on callback url")
 	}
 	secret, err := sm.Get(r.Context(), "strava-oauth-client-secret")
 	if err != nil {
